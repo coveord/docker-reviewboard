@@ -1,32 +1,6 @@
 #!/bin/bash
-PGUSER="${PGUSER:-reviewboard}"
-PGPASSWORD="${PGPASSWORD:-reviewboard}"
-PGDB="${PGDB:-reviewboard}"
 
-# Get these variables either from PGPORT and PGHOST, or from
-# linked "pg" container.
-PGPORT="${PGPORT:-$( echo "${PG_PORT_5432_TCP_PORT:-5432}" )}"
-PGHOST="${PGHOST:-$( echo "${PG_PORT_5432_TCP_ADDR:-127.0.0.1}" )}"
-
-# Get these variable either from MEMCACHED env var, or from
-# linked "memcached" container.
-MEMCACHED_LINKED_NOTCP="${MEMCACHED_PORT#tcp://}"
-MEMCACHED="${MEMCACHED:-$( echo "${MEMCACHED_LINKED_NOTCP:-127.0.0.1}" )}"
-
-DOMAIN="${DOMAIN:localhost}"
-
-if [[  "${WAIT_FOR_POSTGRES}" = "true" ]]; then
-
-    echo "Waiting for Postgres readiness..."
-    export PGUSER PGHOST PGPORT PGPASSWORD
-
-    until psql "${PGDB}"; do
-        echo "Postgres is unavailable - sleeping"
-        sleep 1
-    done
-    echo "Postgres is up!"
-
-fi
+DOMAIN="$( echo "${DOMAIN:-0.0.0.0}" )"
 
 if [[ "${SITE_ROOT}" ]]; then
     if [[ "${SITE_ROOT}" != "/" ]]; then
@@ -38,22 +12,30 @@ else
     SITE_ROOT=/
 fi
 
+MYSQL_DB="$( echo "${MYSQL_DB:-reviewboard}" )"
+MYSQL_HOST="$( echo "${MYSQL_HOST:-localhost}" )"
+MYSQL_PORT="$( echo "${MYSQL_PORT:-3306}" )"
+MYSQL_USER="$( echo "${MYSQL_USER:-reviewboard}" )"
+MYSQL_PASSWORD="$( echo "${MYSQL_PASSWORD:-reviewboard}" )"
+
+$MEMCACHED_PORT="$( echo "${MEMCACHED_PORT:-11211}" )"
+
 mkdir -p /var/www/
 
 CONFFILE=/var/www/reviewboard/conf/settings_local.py
 
 if [[ ! -d /var/www/reviewboard ]]; then
     rb-site install --noinput \
-        --domain-name="$DOMAIN" \
+        --domain-name="${DOMAIN}" \
         --site-root="$SITE_ROOT" \
         --static-url=static/ --media-url=media/ \
-        --db-type=postgresql \
-        --db-name="$PGDB" \
-        --db-host="$PGHOST" \
-        --db-user="$PGUSER" \
-        --db-pass="$PGPASSWORD" \
-        --cache-type=memcached --cache-info="$MEMCACHED" \
-        --web-server-type=lighttpd --web-server-port=8000 \
+        --db-type=mysql \
+        --db-name="$MYSQL_DB" \
+        --db-host="$MYSQL_HOST:$MYSQL_PORT" \
+        --db-user="$MYSQL_USER" \
+        --db-pass="$MYSQL_PASSWORD" \
+        --cache-type=memcached --cache-info="$MEMCACHED_ENDPOINT:$MEMCACHED_PORT" \
+        --web-server-type=lighttpd --web-server-port=80 \
         --admin-user=admin --admin-password=admin --admin-email=admin@example.com \
         /var/www/reviewboard/
 fi
