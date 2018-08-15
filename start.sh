@@ -40,7 +40,7 @@ if [[ ! -d /var/www/reviewboard ]]; then
         /var/www/reviewboard/
 fi
 
-/upgrade-site.py /var/www/reviewboard/rb-version /var/www/reviewboard
+/app/reviewboard/upgrade-site.py /var/www/reviewboard/rb-version /var/www/reviewboard
 
 if [[ "${DEBUG}" ]]; then
     sed -i 's/DEBUG *= *False/DEBUG=True/' "$CONFFILE"
@@ -49,4 +49,4 @@ fi
 
 export SITE_ROOT
 
-exec uwsgi --ini /uwsgi.ini
+exec uwsgi --ini /app/reviewboard/uwsgi.ini

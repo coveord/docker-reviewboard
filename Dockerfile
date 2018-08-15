@@ -35,14 +35,15 @@ RUN set -ex; \
 
 ENV PATH="/opt/venv/bin:${PATH}"
 
-ADD start.sh /start.sh
-ADD uwsgi.ini /uwsgi.ini
-ADD upgrade-site.py /upgrade-site.py
+RUN mkdir -p /app/reviewboard
+ADD start.sh /app/reviewboard/start.sh
+ADD uwsgi.ini /app/reviewboard/uwsgi.ini
+ADD upgrade-site.py /app/reviewboard/upgrade-site.py
 
-RUN chmod +x /start.sh /upgrade-site.py
+RUN chmod +x /app/reviewboard/start.sh /app/reviewboard/upgrade-site.py
 
 VOLUME /var/www/
 
 EXPOSE 80
 
-CMD /start.sh
+CMD /app/reviewboard/start.sh
